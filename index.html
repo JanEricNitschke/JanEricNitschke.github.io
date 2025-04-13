@@ -1,1 +1,160 @@
-Hello World
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Portfolio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        #portfolio {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #fff;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        a {
+            color: #333;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .repo-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .readme {
+            margin-top: 1rem;
+        }
+
+        #pages-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .page-link {
+            background-color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            font-weight: bold;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@15.0.8/lib/marked.umd.min.js"></script>
+</head>
+
+<body>
+
+    <header>
+        <h1>Jan-Eric GitHub Overview</h1>
+    </header>
+
+    <div id="portfolio">
+        <div id="pages-list"></div> <!-- New section for GitHub Pages links -->
+        <ul id="repo-list"></ul> <!-- Repo list as before -->
+    </div>
+
+    <script>
+        const username = 'JanEricNitschke';
+        const apiUrl = `https://api.github.com/users/${username}/repos`;
+
+        async function fetchRepos() {
+            const pinned = await fetch(`https://pinned.berrysauce.dev/get/${username}`);
+            const pinnedRepos = (await pinned.json()).map(repo => repo.name);
+
+            const response = await fetch(apiUrl);
+            const repos = (await response.json()).filter(repo => repo.name !== "JanEricNitschke.github.io");
+
+            const repoList = document.getElementById('repo-list');
+            const pagesList = document.getElementById('pages-list');
+            repoList.innerHTML = '';
+            pagesList.innerHTML = '';
+
+            const featuredRepos = repos.filter(repo => pinnedRepos.includes(repo.name));
+            const nonFeaturedRepos = repos.filter(repo => !pinnedRepos.includes(repo.name));
+            const reposWithPages = nonFeaturedRepos.filter(repo => repo.has_pages);
+
+            const twoYearsAgo = new Date();
+            twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+
+            const otherRepos = nonFeaturedRepos.filter(repo => !repo.has_pages && (new Date(repo.pushed_at) > twoYearsAgo));
+
+            const sortedRepos = [...featuredRepos, ...reposWithPages, ...otherRepos];
+
+            // --- Show Repositories ---
+            for (const repo of sortedRepos) {
+                const repoItem = document.createElement('li');
+                const repoName = document.createElement('h2');
+                const repoDescription = document.createElement('p');
+                const repoLinks = document.createElement('div');
+
+                repoName.innerHTML = `<a href="${repo.html_url}" target="_blank">${repo.name}</a>`;
+                repoDescription.innerText = repo.description || 'No description available.';
+
+                if (repo.has_pages) {
+                    const pagesLink = document.createElement('a');
+                    pagesLink.href = `https://${username}.github.io/${repo.name}`;
+                    pagesLink.target = "_blank";
+                    pagesLink.innerText = 'GitHub Pages';
+                    repoLinks.appendChild(pagesLink);
+
+                    const pageLink = document.createElement('a');
+                    pageLink.href = `https://${username}.github.io/${repo.name}`;
+                    pageLink.target = "_blank";
+                    pageLink.innerText = repo.name;
+                    pageLink.className = "page-link";
+                    pagesList.appendChild(pageLink);
+                }
+
+                repoItem.appendChild(repoName);
+                repoItem.appendChild(repoDescription);
+                repoItem.appendChild(repoLinks);
+                repoList.appendChild(repoItem);
+            }
+        }
+
+        fetchRepos();
+    </script>
+
+</body>
+
+</html>
